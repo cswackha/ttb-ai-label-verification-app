@@ -134,9 +134,14 @@ pip install -r requirements.txt
 ```
 - Add local secrets:
 
-Create .streamlit/secrets.toml and add the following:
+Create `.streamlit/secrets.toml` and add the following:
+
+```toml
 OPENAI_API_KEY = "your-api-key-here"
 AI_MODEL = "gpt-5.4-mini"
+```
 
 - Run Locally:
+```bash
 streamlit run app.py
+```
