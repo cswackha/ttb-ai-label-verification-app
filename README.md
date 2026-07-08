@@ -33,7 +33,7 @@ The app allows an agent to:
 The prototype does **not** approve or reject labels automatically.
 
 ---
-# Approach
+## Approach
 
 - AI is used for text extraction and structured interpretation.
 - Python rules perform deterministic comparison.
@@ -41,7 +41,7 @@ The prototype does **not** approve or reject labels automatically.
 
 ---
 
-# Assumptions
+## Assumptions
 
 - This prototype is for evaluation and demonstration only.
 - No sensitive, classified, taxpayer, financial, or personally identifiable Treasury data is used.
