@@ -121,13 +121,11 @@ The app includes a documentation section covering:
 
 ## Local Setup and Run Instructions
 
-```
 1. Clone the repository:
 
-bash
+```bash
 git clone https://github.com/cswackha/ttb-ai-label-verification-app.git
 cd ttb-ai-label-verification-app
-
 ```
 
 2. Install Dependencies:
