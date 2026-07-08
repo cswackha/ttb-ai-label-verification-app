@@ -6,7 +6,7 @@ The app supports single-label review and basic batch upload. It checks common la
 
 The tool uses AI for text extraction and structured interpretation, then applies deterministic comparison rules for consistency, transparency, and repeatability.
 
-The prototype does not approve or reject labels automatically. It highlights likely matches, mismatches, missing information, image quality concerns, and items requiring human review.
+The prototype does not approve or reject labels automatically. It highlights mismatches, missing information, image quality concerns, and items requiring human review.
 
 ## Features
 

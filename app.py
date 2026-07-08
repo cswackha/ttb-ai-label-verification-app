@@ -90,12 +90,12 @@ Return structured fields for:
 - image_quality_reason
 
 Important:
+- Extract only text that is visibly present on the uploaded label artwork.
+- Do not rewrite, correct, title-case, uppercase, lowercase, abbreviate, expand, or standardize extracted text.
+- Preserve the original capitalization, punctuation, spelling, spacing, and wording as closely as possible for every extracted field.
 - If a field is not visible, return an empty string.
 - Preserve capitalization for the government warning statement.
 - Preserve punctuation for the government warning statement.
-- Use unreadable_areas to identify glare, blur, angled text, low resolution, cropped areas, or text blocked by artwork.
-- Use image_quality = "Review Needed" if glare, blur, shadows, crop, low contrast, or angle could affect extraction.
-- Do not approve or reject the label. Extraction only.
 
 Reference warning text for comparison context only:
 {GOVERNMENT_WARNING_REQUIRED}
@@ -254,71 +254,163 @@ def parse_proof(value: str) -> float | None:
             return None
     return None
 
+COUNTRY_ALIASES = {
+    "usa": "USA",
+    "u s a": "USA",
+    "u.s.a": "USA",
+    "u.s.a.": "USA",
+    "us": "USA",
+    "u.s.": "USA",
+    "united states": "USA",
+    "united states of america": "USA",
+    "america": "USA",
+
+    "canada": "Canada",
+    "mexico": "Mexico",
+    "france": "France",
+    "italy": "Italy",
+    "spain": "Spain",
+    "germany": "Germany",
+    "ireland": "Ireland",
+    "scotland": "Scotland",
+    "japan": "Japan",
+    "china": "China",
+    "australia": "Australia",
+    "new zealand": "New Zealand",
+    "argentina": "Argentina",
+    "chile": "Chile",
+    "south africa": "South Africa",
+    "portugal": "Portugal",
+}
+
+
+def normalize_country_text(value: str) -> str:
+    """
+    Normalize text only for country detection.
+    This does not change the displayed extracted label text.
+    """
+    if value is None:
+        return ""
+
+    value = str(value).lower()
+    value = value.replace(".", " ")
+    value = value.replace(",", " ")
+    value = value.replace("-", " ")
+    value = re.sub(r"\s+", " ", value).strip()
+    return value
+
+
+def detect_country(value: str) -> str:
+    """
+    Detect a country from application or label text.
+
+    Examples:
+    - USA -> USA
+    - Product of USA -> USA
+    - Product of the United States -> USA
+    - Imported from France -> France
+    """
+
+    normalized = normalize_country_text(value)
+
+    if not normalized:
+        return ""
+
+    origin_phrases = [
+        "product of",
+        "produced in",
+        "made in",
+        "imported from",
+        "country of origin",
+        "bottled in",
+        "distilled in",
+    ]
+
+    cleaned = normalized
+
+    for phrase in origin_phrases:
+        cleaned = cleaned.replace(phrase, " ")
+
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+
+    if cleaned in COUNTRY_ALIASES:
+        return COUNTRY_ALIASES[cleaned]
+
+    for alias, canonical in COUNTRY_ALIASES.items():
+        pattern = r"\b" + re.escape(alias) + r"\b"
+        if re.search(pattern, cleaned):
+            return canonical
+
+    return ""
 
 def compare_text(field_name: str, expected: str, extracted: str) -> Dict[str, str]:
-    expected = collapse_whitespace(expected)
-    extracted = collapse_whitespace(extracted)
+    expected_display = collapse_whitespace(expected)
+    extracted_display = collapse_whitespace(extracted)
     display = FIELD_DISPLAY.get(field_name, field_name)
 
-    if not expected:
+    if not expected_display:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Not Provided",
             "Reason": "No expected application value was entered for this field.",
         }
 
-    if not extracted:
+    if not extracted_display:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Missing",
             "Reason": "Expected application value was entered, but no matching label text was extracted.",
         }
 
-    if expected == extracted:
+    if expected_display == extracted_display:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Match",
             "Reason": "Exact text match.",
         }
 
-    if normalize_text(expected) == normalize_text(extracted):
+    expected_normalized = normalize_text(expected_display)
+    extracted_normalized = normalize_text(extracted_display)
+
+    if expected_normalized == extracted_normalized:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Likely Match",
             "Reason": "Same text after case and punctuation normalization.",
         }
 
-    score = similarity(expected, extracted)
+    score = SequenceMatcher(None, expected_normalized, extracted_normalized).ratio()
+
     if score >= 0.85:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Likely Match",
             "Reason": f"Text is very similar after normalization. Similarity score: {score:.2f}.",
         }
 
-    if normalize_text(expected) in normalize_text(extracted) or normalize_text(extracted) in normalize_text(expected):
+    if expected_normalized in extracted_normalized or extracted_normalized in expected_normalized:
         return {
             "Field": display,
-            "Expected": expected,
-            "Extracted": extracted,
+            "Expected": expected_display,
+            "Extracted": extracted_display,
             "Result": "Needs Review",
             "Reason": "One value appears to contain the other, but the text is not an exact match.",
         }
 
     return {
         "Field": display,
-        "Expected": expected,
-        "Extracted": extracted,
+        "Expected": expected_display,
+        "Extracted": extracted_display,
         "Result": "Mismatch",
         "Reason": "Extracted label text does not match the application value.",
     }
@@ -454,8 +546,58 @@ def compare_government_warning(extracted_warning: str) -> Dict[str, str]:
         "Reason": "Warning contains major required phrases, but wording, punctuation, or capitalization is not an exact match.",
     }
 
+def compare_country_of_origin(expected: str, extracted: str):
+    expected_display = collapse_whitespace(expected)
+    extracted_display = collapse_whitespace(extracted)
 
-def run_comparison(expected: Dict[str, str], extraction: Dict[str, Any]) -> List[Dict[str, str]]:
+    if not expected_display:
+        return {
+            "Field": "Country of Origin",
+            "Expected": expected_display,
+            "Extracted": extracted_display,
+            "Result": "Not Provided",
+            "Reason": "No expected country of origin was entered.",
+        }
+
+    if not extracted_display:
+        return {
+            "Field": "Country of Origin",
+            "Expected": expected_display,
+            "Extracted": extracted_display,
+            "Result": "Missing",
+            "Reason": "Expected country of origin was entered, but no country of origin text was extracted from the label.",
+        }
+
+    expected_country = detect_country(expected_display)
+    extracted_country = detect_country(extracted_display)
+
+    if expected_country and extracted_country:
+        if expected_country == extracted_country:
+            return {
+                "Field": "Country of Origin",
+                "Expected": expected_display,
+                "Extracted": extracted_display,
+                "Result": "Match",
+                "Reason": f"Country of origin detected as {extracted_country} in extracted label text.",
+            }
+
+        return {
+            "Field": "Country of Origin",
+            "Expected": expected_display,
+            "Extracted": extracted_display,
+            "Result": "Mismatch",
+            "Reason": f"Expected country of origin is {expected_country}, but extracted label text appears to indicate {extracted_country}.",
+        }
+
+    return {
+        "Field": "Country of Origin",
+        "Expected": expected_display,
+        "Extracted": extracted_display,
+        "Result": "Needs Review",
+        "Reason": "Country of origin text could not be confidently parsed.",
+    }
+
+def run_comparison(expected, extraction):
     producer_address = collapse_whitespace(
         f"{extraction.get('producer_bottler_name', '')} {extraction.get('address', '')}"
     )
@@ -470,26 +612,29 @@ def run_comparison(expected: Dict[str, str], extraction: Dict[str, Any]) -> List
         ),
         compare_text("net_contents", expected.get("net_contents", ""), extraction.get("net_contents", "")),
         compare_text("name_address", expected.get("name_address", ""), producer_address),
-        compare_text("country_of_origin", expected.get("country_of_origin", ""), extraction.get("country_of_origin", "")),
+        compare_country_of_origin(
+            expected.get("country_of_origin", ""),
+            extraction.get("country_of_origin", ""),
+        ),
         compare_government_warning(extraction.get("government_warning_text", "")),
     ]
+
     return results
 
 
-def determine_overall_status(comparison_results, extraction) -> str:
+def determine_overall_status(comparison_rows, extraction):
     """
     Overall status rules:
-    - Fail if the government warning label fails or a clear mismatch exists.
-    - Needs Review if required information is missing or uncertain.
-    - Pass if fields are exact or likely matches (e.g. capitalization mismatch).
+    - Fail if the government warning fails.
+    - Fail if any field result is Mismatch.
+    - Needs Review if any field is Missing, Needs Review, or Unreadable.
+    - Needs Review if image quality may affect extraction.
+    - Pass only when all fields are Match, Likely Match, or Not Provided.
     """
 
-    results = [row.get("result", "") for row in comparison_results]
-    fields = [row.get("field", "") for row in comparison_results]
-
-    for row in comparison_results:
-        field = row.get("field", "")
-        result = row.get("result", "")
+    for row in comparison_rows:
+        field = row.get("Field", "")
+        result = row.get("Result", "")
 
         if field == "Government Warning" and result == "Fail":
             return "Fail"
@@ -499,7 +644,11 @@ def determine_overall_status(comparison_results, extraction) -> str:
 
     review_results = {"Missing", "Needs Review", "Unreadable"}
 
-    if any(result in review_results for result in results):
+    for row in comparison_rows:
+        if row.get("Result", "") in review_results:
+            return "Needs Review"
+
+    if extraction.get("image_quality") == "Review Needed":
         return "Needs Review"
 
     return "Pass"
