@@ -476,7 +476,7 @@ def run_comparison(expected: Dict[str, str], extraction: Dict[str, Any]) -> List
     return results
 
 
-def determine_overall_status(comparison_results):
+def determine_overall_status(comparison_results, extraction) -> str:
     """
     Overall status rules:
     - Fail if the government warning label fails or a clear mismatch exists.
