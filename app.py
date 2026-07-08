@@ -476,29 +476,29 @@ def run_comparison(expected: Dict[str, str], extraction: Dict[str, Any]) -> List
     return results
 
 
-def determine_overall_status(comparison_rows: List[Dict[str, str]], extraction: Dict[str, Any]) -> str:
-    results = [row["Result"] for row in comparison_rows]
+def determine_overall_status(comparison_results):
+    """
+    Overall status rules:
+    - Fail if the government warning label fails or a clear mismatch exists.
+    - Needs Review if required information is missing or uncertain.
+    - Pass if fields are exact or likely matches (e.g. capitalization mismatch).
+    """
 
-    if "Fail" in results:
-        return "Fail"
+    results = [row.get("result", "") for row in comparison_results]
+    fields = [row.get("field", "") for row in comparison_results]
 
-    # Required application fields that should fail if the entered value mismatches or is missing.
-    fail_results = {"Missing", "Mismatch"}
-    required_fields = {
-        "Brand Name",
-        "Class / Type",
-        "Alcohol Content",
-        "Net Contents",
-        "Name and Address",
-    }
-    for row in comparison_rows:
-        if row["Field"] in required_fields and row["Result"] in fail_results:
+    for row in comparison_results:
+        field = row.get("field", "")
+        result = row.get("result", "")
+
+        if field == "Government Warning" and result == "Fail":
             return "Fail"
 
-    if extraction.get("image_quality") == "Review Needed":
-        return "Needs Review"
+        if result == "Mismatch":
+            return "Fail"
 
-    review_results = {"Likely Match", "Needs Review", "Missing", "Mismatch"}
+    review_results = {"Missing", "Needs Review", "Unreadable"}
+
     if any(result in review_results for result in results):
         return "Needs Review"
 
