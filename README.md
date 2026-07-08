@@ -1,4 +1,9 @@
-# TTB Alcohol Label Verification Prototype
+# AI-Powered Alcohol Label Verification Prototype
+
+## Deployed Application
+
+Live prototype:
+https://ttb-ai-label-verification-app-prototype.streamlit.app/
 
 This prototype assists TTB compliance agents by extracting information from alcohol beverage label artwork and comparing it against application-provided values.
 
@@ -114,10 +119,24 @@ The app includes a documentation section covering:
 
 ---
 
-## Local Setup in VS Code
+## Local Setup and Run Instructions
 
-### 1. Create or open the project folder
+1. Clone the repository:
 
 ```bash
-mkdir ttb-label-verification-prototype
-cd ttb-label-verification-prototype
+git clone https://github.com/cswackha/ttb-ai-label-verification-app.git
+cd ttb-ai-label-verification-app
+
+2. Install Dependencies:
+
+pip install -r requirements.txt
+
+3. Add local secrets:
+
+Create .streamlit/secrets.toml and add the following:
+OPENAI_API_KEY = "your-api-key-here"
+AI_MODEL = "gpt-5.4-mini"
+
+4. Run Locally:
+streamlit run app.py
+
