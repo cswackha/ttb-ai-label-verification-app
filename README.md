@@ -117,17 +117,17 @@ The app includes a documentation section covering:
 - Pandas for tables and CSV export
 - Deterministic Python comparison rules
 
+---
 
 ## Local Setup and Run Instructions
 
-````markdown
+```
 1. Clone the repository:
 
-```bash
+bash
 git clone https://github.com/cswackha/ttb-ai-label-verification-app.git
 cd ttb-ai-label-verification-app
 
-````markdown
 ```
 
 2. Install Dependencies:
@@ -142,4 +142,3 @@ AI_MODEL = "gpt-5.4-mini"
 
 ### 4. Run Locally:
 streamlit run app.py
-
