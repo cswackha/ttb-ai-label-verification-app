@@ -120,23 +120,23 @@ The app includes a documentation section covering:
 ---
 
 ## Local Setup and Run Instructions
-
-1. Clone the repository:
+- Clone the repository:
 
 ```bash
 git clone https://github.com/cswackha/ttb-ai-label-verification-app.git
 cd ttb-ai-label-verification-app
 ```
 
-2. Install Dependencies:
+- Install Dependencies:
 
+```bash
 pip install -r requirements.txt
-
-3. Add local secrets:
+```
+- Add local secrets:
 
 Create .streamlit/secrets.toml and add the following:
 OPENAI_API_KEY = "your-api-key-here"
 AI_MODEL = "gpt-5.4-mini"
 
-### 4. Run Locally:
+- Run Locally:
 streamlit run app.py
