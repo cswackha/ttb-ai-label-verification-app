@@ -5,6 +5,8 @@
 Live prototype:
 https://ttb-ai-label-verification-app-prototype.streamlit.app/
 
+## Summary
+
 This prototype assists TTB compliance agents by extracting information from alcohol beverage label artwork and comparing it against application-provided values.
 
 The application is designed as a **human-in-the-loop review aid**, not an automated label approval system. It helps agents quickly identify likely matches, mismatches, missing information, image quality concerns, and items that require human review.
@@ -29,6 +31,33 @@ The app allows an agent to:
 6. Export review results to CSV.
 
 The prototype does **not** approve or reject labels automatically.
+
+---
+# Approach
+
+- AI is used for text extraction and structured interpretation.
+- Python rules perform deterministic comparison.
+- The tool flags matches, likely matches, mismatches, missing values, warning failures, and image quality concerns.
+
+---
+
+# Assumptions
+
+- This prototype is for evaluation and demonstration only.
+- No sensitive, classified, taxpayer, financial, or personally identifiable Treasury data is used.
+- AI-generated recommendations are advisory and require human review.
+- The application demonstrates a possible workflow, not a production authorization system.
+- A future production version would require authentication, audit logging, security scanning, privacy review, and agency-approved hosting.
+
+---
+
+## Tech Stack
+
+- Python
+- Streamlit
+- OpenAI vision-capable model for image extraction
+- Pandas for tables and CSV export
+- Deterministic Python comparison rules
 
 ---
 
@@ -106,16 +135,6 @@ The app includes a documentation section covering:
 - Limitations
 - Security considerations
 - Future production enhancements
-
----
-
-## Tech Stack
-
-- Python
-- Streamlit
-- OpenAI vision-capable model for image extraction
-- Pandas for tables and CSV export
-- Deterministic Python comparison rules
 
 ---
 
