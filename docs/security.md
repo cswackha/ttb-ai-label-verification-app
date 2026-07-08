@@ -1,6 +1,6 @@
 # Security Considerations
 
-This prototype follows cybersecurity-by-design principles appropriate for a take-home assessment.
+This prototype may send uploaded label artwork to OpenAI for assessment purposes. A production version should use an agency-approved environment, approved model endpoint, authentication, authorization, audit logging, retention controls, encryption, monitoring, and security review before handling sensitive or non-public application data.
 
 ## Current Controls
 
@@ -10,14 +10,13 @@ This prototype follows cybersecurity-by-design principles appropriate for a take
 - No persistent storage of submitted data
 - Human-in-the-loop recommendations
 - Basic input validation
-- Mock mode when no API key is configured
 
 ## Future Production Enhancements
 
-- Authentication and role-based access control
-- Centralized logging and audit trails
-- Model monitoring
-- Prompt injection testing
-- Red-team testing
-- CI/CD security scanning
-- FedRAMP-authorized cloud hosting
+- CSV upload for application records.
+- Field-of-vision checks for distilled spirits.
+- Confidence scoring per extracted field.
+- Audit trail and reviewer sign-off.
+- Role-based access control.
+- Integration with COLA Online or internal workflow systems.
+- Agency-hosted OCR/model endpoint.
